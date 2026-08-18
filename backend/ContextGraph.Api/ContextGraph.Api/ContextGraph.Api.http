@@ -1,0 +1,6 @@
+@ContextGraph.Api_HostAddress = http://localhost:5122
+
+GET {{ContextGraph.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

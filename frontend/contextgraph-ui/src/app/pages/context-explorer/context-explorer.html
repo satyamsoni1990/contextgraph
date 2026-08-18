@@ -1,0 +1,657 @@
+<div class="context-page">
+
+  <!-- ========================================= -->
+  <!-- HEADER -->
+  <!-- ========================================= -->
+
+  <header class="page-header">
+
+    <div>
+
+      <h1>
+        ContextGraph
+      </h1>
+
+      <p>
+        AI Work Context Explorer
+      </p>
+
+    </div>
+
+
+    <button class="explore-button" (click)="loadGraph()">
+
+      Explore Context
+
+    </button>
+
+  </header>
+
+
+  <!-- ========================================= -->
+  <!-- LOADING -->
+  <!-- ========================================= -->
+
+  @if (loading) {
+
+  <div class="status">
+
+    Loading project context...
+
+  </div>
+
+  }
+
+
+  <!-- ========================================= -->
+  <!-- ERROR -->
+  <!-- ========================================= -->
+
+  @if (error) {
+
+  <div class="error">
+
+    {{ error }}
+
+  </div>
+
+  }
+
+
+  <!-- ========================================= -->
+  <!-- MAIN CONTENT -->
+  <!-- ========================================= -->
+
+  @if (!loading && !error) {
+
+
+  <!-- ======================================= -->
+  <!-- SUMMARY -->
+  <!-- ======================================= -->
+
+  <section class="summary">
+
+
+    <div class="card">
+
+      <span>
+        Project
+      </span>
+
+      <strong>
+        {{ projectId }}
+      </strong>
+
+    </div>
+
+
+    <div class="card">
+
+      <span>
+        Nodes
+      </span>
+
+      <strong>
+        {{ getNodeCount() }}
+      </strong>
+
+    </div>
+
+
+    <div class="card">
+
+      <span>
+        Relationships
+      </span>
+
+      <strong>
+        {{ getRelationshipCount() }}
+      </strong>
+
+    </div>
+
+
+  </section>
+
+  <section class="context-search">
+
+    <div class="search-header">
+
+      <div>
+
+        <span class="search-label">
+          AI WORK CONTEXT
+        </span>
+
+        <h2>
+          Ask about your work context
+        </h2>
+
+        <p>
+          Search connected people, projects,
+          meetings, tasks and documents.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="search-box">
+
+      <input type="text" [(ngModel)]="contextQuery" placeholder="What is Satyam working on?"
+        (keyup.enter)="askContext()" />
+
+      <button (click)="askContext()" [disabled]="contextLoading">
+
+        @if (contextLoading) {
+        @if (contextResult) {
+
+        <div class="context-result">
+
+          <!-- ================================= -->
+          <!-- RESULT HEADER -->
+          <!-- ================================= -->
+
+          <div class="result-header">
+
+            <div>
+
+              <span class="result-label">
+                CONTEXT RESULT
+              </span>
+
+              <h3>
+                {{ contextResult.query }}
+              </h3>
+
+            </div>
+
+
+            <div class="intent-badge">
+
+              Intent
+
+              <strong>
+                {{ contextResult.intent }}
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <!-- ================================= -->
+          <!-- PERSON -->
+          <!-- ================================= -->
+
+          @if (contextResult.person) {
+
+          <div class="result-person">
+
+            <div class="person-avatar">
+
+              {{ contextResult.person.name.charAt(0) }}
+
+            </div>
+
+
+            <div>
+
+              <strong>
+                {{ contextResult.person.name }}
+              </strong>
+
+              <span>
+                {{ contextResult.person.id }}
+              </span>
+
+            </div>
+
+          </div>
+
+          }
+
+
+          <!-- ================================= -->
+          <!-- CONNECTIONS -->
+          <!-- ================================= -->
+
+          @if (
+          contextResult.connections.length > 0
+          ) {
+
+          <div class="result-connections">
+
+            @for (
+            connection
+            of contextResult.connections;
+
+            track
+            connection.relationship +
+            connection.nodeId
+            ) {
+
+            <div class="result-connection">
+
+              <span class="result-type">
+
+                {{ connection.nodeType }}
+
+              </span>
+
+
+              <div class="connection-info">
+
+                <strong>
+                  {{ connection.relationship }}
+                </strong>
+
+                <p>
+                  {{ connection.nodeName }}
+                </p>
+
+                <small>
+                  {{ connection.nodeId }}
+                </small>
+
+              </div>
+
+            </div>
+
+            }
+
+          </div>
+
+          }
+
+
+          <!-- ================================= -->
+          <!-- NO RESULT -->
+          <!-- ================================= -->
+
+          @if (
+          contextResult.connections.length === 0
+          ) {
+
+          <div class="no-context">
+
+            No relevant context was found
+            for this question.
+
+          </div>
+
+          }
+
+        </div>
+
+        }
+        } @else {
+        Ask Context
+        }
+
+      </button>
+
+    </div>
+
+
+    @if (contextError) {
+
+    <div class="error">
+      {{ contextError }}
+    </div>
+
+    }
+
+
+    @if (contextResult) {
+
+    <div class="context-result">
+
+      <div class="result-header">
+
+        <h3>
+          Context Result
+        </h3>
+
+        <span>
+          {{ contextResult.query }}
+        </span>
+
+      </div>
+
+
+      @if (contextResult.person) {
+
+      <div class="result-person">
+
+        <strong>
+          {{ contextResult.person.name }}
+        </strong>
+
+        <span>
+          {{ contextResult.person.id }}
+        </span>
+
+      </div>
+
+      }
+
+
+      <div class="result-connections">
+
+        @for (
+        connection
+        of contextResult.connections;
+
+        track
+        connection.relationship +
+        connection.nodeId
+        ) {
+
+        <div class="result-connection">
+
+          <span class="result-type">
+            {{ connection.nodeType }}
+          </span>
+
+          <div>
+
+            <strong>
+              {{ connection.relationship }}
+            </strong>
+
+            <p>
+              {{ connection.nodeName }}
+            </p>
+
+            <small>
+              {{ connection.nodeId }}
+            </small>
+
+          </div>
+
+        </div>
+
+        }
+
+      </div>
+
+    </div>
+
+    }
+
+  </section>
+
+  <!-- ======================================= -->
+  <!-- GRAPH + DETAILS -->
+  <!-- ======================================= -->
+
+  <section class="graph-layout">
+
+
+    <!-- ===================================== -->
+    <!-- GRAPH -->
+    <!-- ===================================== -->
+
+    <section class="graph-panel">
+
+
+      <div class="graph-header">
+
+        <div>
+
+          <h2>
+            Project Context Graph
+          </h2>
+
+          <p>
+            Explore people, meetings, decisions,
+            tasks and project artifacts.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div id="graph-container" class="graph-container">
+      </div>
+
+
+    </section>
+
+
+
+    <!-- ===================================== -->
+    <!-- NODE DETAILS -->
+    <!-- ===================================== -->
+
+    @if (selectedNodeId) {
+
+    <aside class="details-panel">
+
+
+      <!-- Details Header -->
+
+      <div class="details-header">
+
+        <div>
+
+          <span class="details-label">
+            SELECTED CONTEXT
+          </span>
+
+          <h2>
+            Node Details
+          </h2>
+
+        </div>
+
+
+        <button class="close-button" (click)="clearSelection()">
+
+          ×
+
+        </button>
+
+      </div>
+
+
+
+      <!-- Node Information -->
+
+      <div class="node-details">
+
+
+        <h3>
+          {{ selectedNodeName }}
+        </h3>
+
+
+        <span class="node-type">
+          {{ selectedNodeType }}
+        </span>
+
+
+
+        <!-- ID -->
+
+        <div class="detail-item">
+
+          <label>
+            ID
+          </label>
+
+          <strong>
+            {{ selectedNodeId }}
+          </strong>
+
+        </div>
+
+
+
+        <!-- Connected Context -->
+
+        <div class="detail-item">
+
+          <label>
+            Connected Context
+          </label>
+
+        </div>
+
+
+
+        <!-- Relationships -->
+
+        @if (
+        selectedNodeRelationships.length === 0
+        ) {
+
+        <div class="no-connections">
+
+          No connected context found.
+
+        </div>
+
+        }
+
+
+        @for (
+        relationship
+        of selectedNodeRelationships;
+
+        track
+        relationship.type +
+        relationship.otherNodeId
+        ) {
+
+        <div class="connection">
+
+
+          <span class="direction">
+
+            {{ relationship.direction }}
+
+          </span>
+
+
+          <div class="connection-content">
+
+            <strong>
+              {{ relationship.type }}
+            </strong>
+
+            <span>
+              {{ relationship.otherNodeName }}
+            </span>
+
+            <small>
+              {{ relationship.otherNodeId }}
+            </small>
+
+          </div>
+
+
+        </div>
+
+        }
+
+
+      </div>
+
+
+    </aside>
+
+    }
+
+
+  </section>
+
+
+  <!-- ======================================= -->
+  <!-- GRAPH LEGEND -->
+  <!-- ======================================= -->
+
+  <section class="legend-panel">
+
+    <span class="legend-title">
+      Node Types
+    </span>
+
+
+    <div class="legend-items">
+
+
+      <div class="legend-item">
+
+        <span class="legend-dot project"></span>
+
+        Project
+
+      </div>
+
+
+      <div class="legend-item">
+
+        <span class="legend-dot person"></span>
+
+        Person
+
+      </div>
+
+
+      <div class="legend-item">
+
+        <span class="legend-dot meeting"></span>
+
+        Meeting
+
+      </div>
+
+
+      <div class="legend-item">
+
+        <span class="legend-dot decision"></span>
+
+        Decision
+
+      </div>
+
+
+      <div class="legend-item">
+
+        <span class="legend-dot task"></span>
+
+        Task
+
+      </div>
+
+
+      <div class="legend-item">
+
+        <span class="legend-dot document"></span>
+
+        Document
+
+      </div>
+
+
+      <div class="legend-item">
+
+        <span class="legend-dot email"></span>
+
+        Email
+
+      </div>
+
+
+    </div>
+
+  </section>
+
+
+  }
+
+</div>
