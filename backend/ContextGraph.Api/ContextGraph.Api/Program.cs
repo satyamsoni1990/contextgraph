@@ -1,6 +1,7 @@
+using ContextGraph.Api.Configuration;
+using ContextGraph.Api.Repositories;
 using ContextGraph.Api.Services;
 using Neo4j.Driver;
-using ContextGraph.Api.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -43,7 +44,29 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+var openRouterOptions =
+    builder.Configuration
+        .GetSection("OpenRouter")
+        .Get<OpenRouterOptions>()
+    ?? new OpenRouterOptions();
 
+
+builder.Services.AddSingleton(
+    openRouterOptions);
+
+
+builder.Services.AddHttpClient<
+    ILLMService,
+    OpenRouterLLMService>(
+    client =>
+    {
+        client.BaseAddress =
+            new Uri(
+                openRouterOptions.BaseUrl);
+
+        client.Timeout =
+            TimeSpan.FromSeconds(60);
+    });
 var app = builder.Build();
 
 
