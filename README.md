@@ -1,22 +1,116 @@
 
-# ContextGraph — Project Checkpoint
+# ContextGraph
 
-## 1. Project Overview
+**ContextGraph** is an AI-ready Work Context Explorer that uses a graph database to connect people, projects, meetings, decisions, tasks, documents, and emails into a single connected context.
 
-ContextGraph is an AI-powered Work Context Explorer built around:
-
-- ASP.NET Core / C#
-- Angular / TypeScript
-- CognoDB graph database
-- Cypher
-- Cytoscape.js
-- Neo4j-compatible .NET driver
-
-The goal is to connect people, projects, meetings, decisions, tasks, documents and emails into a connected work-context graph.
+The current implementation provides an interactive graph explorer and context search API. The next planned phase is to add an LLM/Graph-RAG layer for natural-language answers.
 
 ---
 
-# 2. Current Architecture
+## What is ContextGraph?
+
+Traditional business applications often store work information in separate systems:
+
+```text
+People
+Projects
+Tasks
+Meetings
+Documents
+Emails
+```
+
+ContextGraph connects these entities through relationships.
+
+For example:
+
+```text
+                    Phoenix
+                       |
+          +------------+------------+
+          |            |            |
+       WORKS_ON     ATTENDED     AUTHORED
+          |            |            |
+        Satyam      Meeting      Document
+          |
+     ASSIGNED_TO
+          |
+         Task
+```
+
+This allows the system to answer questions using connected work context rather than isolated records.
+
+---
+
+# Key Use Cases
+
+ContextGraph is designed for work-context intelligence.
+
+Examples:
+
+### What is Satyam working on?
+
+```text
+Satyam
+   |
+   +-- WORKS_ON --> Phoenix
+   |
+   +-- ASSIGNED_TO --> Prepare release plan
+   |
+   +-- ATTENDED --> Phoenix Sprint Planning
+   |
+   +-- AUTHORED --> Phoenix Release Plan
+   |
+   +-- SENT --> Phoenix Release Timeline
+```
+
+### Other business questions
+
+- What is a person currently working on?
+- What tasks are assigned to a person?
+- Who is working on a project?
+- What happened in a meeting?
+- What decisions were made?
+- Which documents are related to a project?
+- Which emails are related to a work item?
+- What context should a user know before taking an action?
+
+---
+
+# Technology Stack
+
+## Backend
+
+- C#
+- ASP.NET Core
+- REST API
+- Neo4j-compatible .NET Driver
+
+## Database
+
+- CognoDB
+- Graph database
+- Cypher
+
+## Frontend
+
+- Angular
+- TypeScript
+- Cytoscape.js
+- HTML
+- CSS
+
+## Development
+
+- Visual Studio
+- Node.js / npm
+- Git / GitHub
+
+---
+
+# Architecture
+
+Current architecture:
 
 ```text
                          User
@@ -50,9 +144,9 @@ The goal is to connect people, projects, meetings, decisions, tasks, documents a
 
 ---
 
-# 3. Graph Model
+# Current Data Model
 
-Current entities:
+The current graph contains:
 
 ```text
 Person
@@ -62,6 +156,16 @@ Decision
 Task
 Document
 Email
+```
+
+Example relationships include:
+
+```text
+WORKS_ON
+ATTENDED
+ASSIGNED_TO
+AUTHORED
+SENT
 ```
 
 Example:
@@ -80,21 +184,60 @@ Satyam
    +-- SENT ------------> Phoenix Release Timeline
 ```
 
-Current graph demonstrated:
+The current working graph contains:
 
-- 7 nodes
-- 10 relationships
+```text
+7 nodes
+10 relationships
+```
 
 ---
 
-# 4. Backend
-
-## Project
+# Project Structure
 
 ```text
-backend/
-└── ContextGraph.Api/
+contextgraph/
+│
+├── .gitignore
+├── README.md
+│
+├── backend/
+│   └── ContextGraph.Api/
+│       │
+│       ├── Controllers/
+│       ├── Models/
+│       ├── Repositories/
+│       ├── Services/
+│       ├── Configuration/
+│       └── Program.cs
+│
+├── frontend/
+│   └── contextgraph-ui/
+│       │
+│       ├── src/
+│       │   └── app/
+│       │       ├── core/
+│       │       ├── models/
+│       │       └── context-explorer/
+│       │
+│       └── package.json
+│
+├── database/
+├── docs/
+└── scripts/
 ```
+
+---
+
+# Backend
+
+The ASP.NET Core API is responsible for:
+
+- Connecting to CognoDB
+- Executing Cypher queries
+- Retrieving graph context
+- Detecting query intent
+- Returning structured context to Angular
 
 Important areas:
 
@@ -109,24 +252,28 @@ Program.cs
 
 ---
 
-# 5. CognoDB
+# CognoDB
 
-The application connects to CognoDB through the Neo4j-compatible .NET driver.
+ContextGraph uses CognoDB as the graph database.
 
-Cypher is used to query graph relationships.
+The backend uses the Neo4j-compatible .NET driver to execute Cypher queries.
 
-Example graph concept:
+Example:
 
 ```cypher
 MATCH (p:Person)-[r:WORKS_ON]->(project:Project)
 RETURN p, r, project
 ```
 
+Graph relationships are the key to retrieving connected work context.
+
 ---
 
-# 6. Working Graph API
+# API
 
-The API can retrieve project context.
+## Project Graph
+
+The application provides an endpoint for retrieving project context.
 
 Example:
 
@@ -134,11 +281,11 @@ Example:
 GET /api/Graph/explorer/PR001
 ```
 
-The API returns graph nodes and relationships.
+The response contains graph nodes and relationships used by the Angular graph explorer.
 
 ---
 
-# 7. Context Query API
+## Context Query
 
 Endpoint:
 
@@ -154,7 +301,7 @@ Request:
 }
 ```
 
-Current backend flow:
+Current processing flow:
 
 ```text
 Question
@@ -175,11 +322,34 @@ CognoDB
 Relevant Context
 ```
 
+Example response:
+
+```json
+{
+  "query": "What is Satyam working on?",
+  "intent": "WorkingOn",
+  "person": {
+    "id": "P001",
+    "name": "Satyam"
+  },
+  "connections": [
+    {
+      "relationship": "WORKS_ON",
+      "nodeId": "PR001",
+      "nodeName": "Phoenix",
+      "nodeType": "Project"
+    }
+  ]
+}
+```
+
 ---
 
-# 8. Query Intent Detection
+# Query Intent Detection
 
-Current rule-based intents:
+The current implementation uses simple rule-based intent detection.
+
+Supported intents:
 
 ```text
 General
@@ -192,7 +362,7 @@ WhoWorking
 
 Examples:
 
-| Question                                  | Intent     |
+| User Question                             | Intent     |
 | ----------------------------------------- | ---------- |
 | What is Satyam working on?                | WorkingOn  |
 | What tasks are assigned to Satyam?        | Tasks      |
@@ -200,93 +370,30 @@ Examples:
 | What decisions were made?                 | Decisions  |
 | Who is working on Phoenix?                | WhoWorking |
 
-This is intentionally rule-based at the current stage.
+This is intentionally rule-based in the current version.
+
+The planned AI phase will replace or enhance this with LLM-based query understanding.
 
 ---
 
-# 9. Important Driver Fix
+# Frontend
 
-The installed driver version does not support:
+The Angular application provides two main capabilities:
 
-```csharp
-SingleOrDefaultAsync()
-```
+## 1. Graph Explorer
 
-on `IResultCursor`.
+The graph is rendered using Cytoscape.js.
 
-The working approach is:
-
-```csharp
-var hasRecord = await cursor.FetchAsync();
-
-if (hasRecord)
-{
-    var record = cursor.Current;
-}
-```
-
-For multiple records:
-
-```csharp
-while (await cursor.FetchAsync())
-{
-    var record = cursor.Current;
-
-    // process record
-}
-```
-
-This should be kept in mind when adding new CognoDB queries.
-
----
-
-# 10. Angular Frontend
-
-Frontend project:
-
-```text
-frontend/
-└── contextgraph-ui/
-```
-
-Important area:
-
-```text
-src/app/
-├── core/
-├── models/
-└── context-explorer/
-```
-
-The Context Explorer uses Cytoscape.js to display the graph.
-
----
-
-# 11. Cytoscape Graph
-
-The graph supports:
+Users can:
 
 - Zoom
 - Pan
-- Node movement
-- Relationship labels
-- Node selection
-- Node highlighting
-- Node details
+- Move nodes
+- View relationship labels
+- Click nodes
+- View node details
 
-Node colors/types include:
-
-```text
-Project
-Person
-Meeting
-Decision
-Task
-Document
-Email
-```
-
-Clicking a node displays:
+When a node is selected, the application displays:
 
 ```text
 Node Details
@@ -303,9 +410,9 @@ Connected Node ID
 
 ---
 
-# 12. Angular Context Search
+## 2. Context Search
 
-The UI contains:
+The UI contains a search box:
 
 ```text
 Ask about your work context
@@ -313,13 +420,13 @@ Ask about your work context
 [ What is Satyam working on? ] [ Ask Context ]
 ```
 
-Angular calls:
+Angular sends the request to:
 
 ```text
 POST /api/Graph/query-context
 ```
 
-The response displays:
+The result displays:
 
 - Query
 - Intent
@@ -331,15 +438,17 @@ The response displays:
 
 ---
 
-# 13. FormsModule
+# Angular FormsModule
 
-Because Context Explorer is a standalone Angular component, FormsModule is imported directly in the component.
+The Context Explorer is a standalone Angular component.
+
+`FormsModule` is therefore imported directly into the component:
 
 ```typescript
 import { FormsModule } from '@angular/forms';
 ```
 
-Component:
+And:
 
 ```typescript
 @Component({
@@ -359,9 +468,7 @@ This enables:
 
 ---
 
-# 14. Angular Context Models
-
-Current model:
+# Current Angular Models
 
 ```typescript
 export interface ContextQueryResponse {
@@ -399,84 +506,55 @@ export interface ContextConnection {
 
 ---
 
-# 15. Current Successful Test
+# Running the Project
 
-The following question works:
+## Backend
 
-```text
-What is Satyam working on?
-```
+Open the solution in Visual Studio.
 
-The backend returns context including:
+Start:
 
 ```text
-Satyam
-P001
-
-WORKS_ON
-Phoenix
-PR001
-
-ASSIGNED_TO
-Prepare release plan
-T001
-
-ATTENDED
-Phoenix Sprint Planning
-M001
-
-AUTHORED
-Phoenix Release Plan
-DOC001
-
-SENT
-E001
+ContextGraph.Api
 ```
 
-The Angular UI successfully displays this context.
+Swagger should be available when the API starts.
 
 ---
 
-# 16. Current Stable Architecture
+## Frontend
 
-```text
-User
- |
- v
-Angular Context Explorer
- |
- | HTTP POST
- v
-ASP.NET Core
- |
- v
-ContextQueryService
- |
- v
-Intent Detection
- |
- v
-Cypher
- |
- v
-CognoDB
- |
- v
-Structured Context
- |
- v
-Angular UI
+Open a terminal:
+
+```powershell
+cd frontend/contextgraph-ui
 ```
 
-This is the current stable checkpoint.
+Install dependencies:
+
+```powershell
+npm install
+```
+
+Start Angular:
+
+```powershell
+ng serve
+```
+
+Open:
+
+```text
+http://localhost:4200
+```
 
 ---
 
-# 17. Git / .gitignore
+# Git and .gitignore
 
-Create `.gitignore` at the repository root.
+The repository should contain a `.gitignore` at the root.
 
-Recommended contents:
+Recommended:
 
 ```gitignore
 # Visual Studio
@@ -508,7 +586,7 @@ TestResults/
 Thumbs.db
 ```
 
-Do not commit:
+Never commit:
 
 ```text
 API keys
@@ -526,88 +604,81 @@ dist
 
 ---
 
-# 18. Git Commit Checkpoint
+# Current Successful Scenario
 
-Before commit:
-
-```powershell
-git status
-```
-
-Add files:
-
-```powershell
-git add .
-```
-
-Commit:
-
-```powershell
-git commit -m "Add graph context explorer and query support"
-```
-
-Push:
-
-```powershell
-git push origin main
-```
-
-A documentation-only follow-up commit can be:
-
-```powershell
-git add README.md .gitignore
-git commit -m "Update project documentation and gitignore"
-git push origin main
-```
-
----
-
-# 19. Business Use Case
-
-ContextGraph represents a work-context intelligence system.
-
-Example question:
+The following question is currently supported:
 
 ```text
 What is Satyam working on?
 ```
 
-The graph can connect:
+The graph/context contains information such as:
 
 ```text
 Satyam
- |
- +-- WORKS_ON --> Phoenix
- |
- +-- ASSIGNED_TO --> Prepare release plan
- |
- +-- ATTENDED --> Phoenix Sprint Planning
- |
- +-- AUTHORED --> Phoenix Release Plan
- |
- +-- SENT --> Phoenix Release Timeline
+P001
+
+WORKS_ON
+Phoenix
+PR001
+
+ASSIGNED_TO
+Prepare release plan
+T001
+
+ATTENDED
+Phoenix Sprint Planning
+M001
+
+AUTHORED
+Phoenix Release Plan
+DOC001
+
+SENT
+Phoenix Release Timeline
+E001
 ```
 
-This provides connected context instead of isolated records.
-
-Potential business questions:
-
-- What is a person currently working on?
-- What tasks are assigned to a person?
-- Who is working on a project?
-- What happened in a meeting?
-- What decisions were made?
-- Which documents are related to a project?
-- Which emails are related to a work item?
-- What context should a user know before taking an action?
+The Angular application successfully displays the retrieved context.
 
 ---
 
-# 20. Next Phase — AI / Graph RAG
+# Design Principle
 
-The LLM integration was intentionally postponed.
+The important architectural principle is:
 
-Planned architecture:
+> Retrieve verified business context from the graph first, then use AI to reason over that context.
+
+The planned architecture is:
+
+```text
+User Question
+      |
+      v
+Query Understanding
+      |
+      v
+CognoDB Graph Retrieval
+      |
+      v
+Verified Work Context
+      |
+      v
+LLM
+      |
+      v
+Natural Language Answer
+```
+
+The LLM should not invent project information that is not present in the retrieved context.
+
+---
+
+# Future AI / Graph-RAG Architecture
+
+The next major phase is AI integration.
+
+Planned flow:
 
 ```text
                     User Question
@@ -619,7 +690,7 @@ Planned architecture:
                     CognoDB Graph
                           |
                           v
-                 Verified Context
+                 Relevant Graph Context
                           |
                           v
                          LLM
@@ -637,15 +708,19 @@ which is currently Open. The work was discussed
 during the Phoenix Sprint Planning meeting.
 ```
 
-Important principle:
+The LLM will be placed behind an interface so the provider can be changed later without changing the graph/business logic.
 
-The LLM should not invent business information.
+Possible future providers include:
 
-The graph should provide the relevant business context first, and the LLM should reason over that retrieved context.
+```text
+OpenRouter
+Azure OpenAI
+OpenAI
+```
 
 ---
 
-# 21. Future Roadmap
+# Roadmap
 
 ## Phase 1 — Foundation
 
@@ -701,11 +776,47 @@ The graph should provide the relevant business context first, and the LLM should
 
 ---
 
-# 22. Current Checkpoint
+# Git Commit Checkpoint
 
-STOP HERE BEFORE STARTING LLM WORK.
+Before starting the LLM phase, commit the current stable implementation.
 
-Stable functionality currently includes:
+Check:
+
+```powershell
+git status
+```
+
+Add:
+
+```powershell
+git add .
+```
+
+Commit:
+
+```powershell
+git commit -m "Add graph context explorer and query support"
+```
+
+Push:
+
+```powershell
+git push origin main
+```
+
+For documentation changes:
+
+```powershell
+git add README.md .gitignore
+git commit -m "Update project documentation and gitignore"
+git push origin main
+```
+
+---
+
+# Current Project Status
+
+Current stable functionality:
 
 ```text
 CognoDB
@@ -727,12 +838,15 @@ Angular
    |
    v
 Cytoscape Graph
+   |
+   v
+Interactive Context Explorer
 ```
 
-The next development step is:
+## Next Step
 
-```text
-Step 19 — LLM / Graph RAG
-```
+The next planned development phase is:
 
-Before starting Step 19, commit the current stable code to Git.
+**LLM + Graph RAG**
+
+The current stable version should be committed to Git before starting that phase.
