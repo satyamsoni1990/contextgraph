@@ -34,6 +34,7 @@ builder.Services.AddScoped<IGraphRepository, GraphRepository>();
 builder.Services.AddScoped<
     IContextQueryService,
     ContextQueryService>();
+builder.Services.AddScoped<ContextAIService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AngularClient", policy =>
