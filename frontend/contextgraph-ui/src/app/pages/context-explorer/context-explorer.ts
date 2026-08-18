@@ -52,6 +52,17 @@ export class ContextExplorer
   contextError = '';
 
   contextResult: ContextQueryResponse | null = null;
+    // ==========================================
+  // AI Context
+  // ==========================================
+
+  aiQuestion = '';
+
+  aiLoading = false;
+
+  aiError = '';
+
+  aiAnswer = '';
   selectedNodeRelationships: {
     type: string;
     direction: string;
@@ -138,6 +149,60 @@ askContext(): void {
 
     });
 }
+  // ==========================================
+  // Ask AI using Graph Context
+  // ==========================================
+
+  askAI(): void {
+
+    if (!this.aiQuestion.trim()) {
+      return;
+    }
+
+    this.aiLoading = true;
+
+    this.aiError = '';
+
+    this.aiAnswer = '';
+
+    this.cdr.markForCheck();
+
+    this.graphApi
+      .askAIContext(this.aiQuestion)
+      .subscribe({
+
+        next: (result) => {
+
+          console.log(
+            'AI context result:',
+            result
+          );
+
+          this.aiAnswer =
+            result.answer;
+
+          this.aiLoading = false;
+
+          this.cdr.markForCheck();
+        },
+
+        error: (error) => {
+
+          console.error(
+            'AI context error:',
+            error
+          );
+
+          this.aiLoading = false;
+
+          this.aiError =
+            'Unable to get an AI answer. Please try again.';
+
+          this.cdr.markForCheck();
+        }
+
+      });
+  }
   // ==========================================
   // Load Graph
   // ==========================================

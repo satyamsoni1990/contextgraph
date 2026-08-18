@@ -112,7 +112,117 @@
 
 
   </section>
+<!-- ========================================= -->
+<!-- AI WORK CONTEXT -->
+<!-- ========================================= -->
 
+<section class="ai-context">
+
+  <div class="ai-header">
+
+    <div>
+
+      <span class="ai-label">
+        AI WORK CONTEXT
+      </span>
+
+      <h2>
+        Ask about your work context
+      </h2>
+
+      <p>
+        Ask questions and get answers using
+        your connected graph context.
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- AI SEARCH -->
+
+  <div class="ai-search-box">
+
+    <input
+      type="text"
+      [(ngModel)]="aiQuestion"
+      placeholder="What is Satyam working on?"
+      (keyup.enter)="askAI()"
+    />
+
+    <button
+      class="ai-button"
+      (click)="askAI()"
+      [disabled]="aiLoading || !aiQuestion.trim()"
+    >
+
+      @if (aiLoading) {
+
+        <span>
+          Thinking...
+        </span>
+
+      } @else {
+
+        <span>
+          Ask AI
+        </span>
+
+      }
+
+    </button>
+
+  </div>
+
+
+  <!-- AI ERROR -->
+
+  @if (aiError) {
+
+    <div class="ai-error">
+      {{ aiError }}
+    </div>
+
+  }
+
+
+  <!-- AI ANSWER -->
+
+  @if (aiAnswer) {
+
+    <div class="ai-answer">
+
+      <div class="ai-answer-header">
+
+        <span class="ai-answer-label">
+          AI ANSWER
+        </span>
+
+        <span class="ai-question">
+          {{ aiQuestion }}
+        </span>
+
+      </div>
+
+
+      <div class="ai-answer-content">
+
+        <div class="ai-icon">
+          AI
+        </div>
+
+        <div class="ai-text">
+          {{ aiAnswer }}
+        </div>
+
+      </div>
+
+    </div>
+
+  }
+
+</section>
   <section class="context-search">
 
     <div class="search-header">
