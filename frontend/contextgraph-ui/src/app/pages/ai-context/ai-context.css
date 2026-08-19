@@ -1,0 +1,17 @@
+.ai-answer-content {
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+.ai-answer-content strong {
+  font-weight: 700;
+}
+
+.ai-answer-content ul {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.ai-answer-content li {
+  margin-bottom: 6px;
+}

@@ -112,84 +112,75 @@
 
 
   </section>
-<!-- ========================================= -->
-<!-- AI WORK CONTEXT -->
-<!-- ========================================= -->
+  <!-- ========================================= -->
+  <!-- AI WORK CONTEXT -->
+  <!-- ========================================= -->
 
-<section class="ai-context">
+  <section class="ai-context">
 
-  <div class="ai-header">
+    <div class="ai-header">
 
-    <div>
+      <div>
 
-      <span class="ai-label">
-        AI WORK CONTEXT
-      </span>
+        <span class="ai-label">
+          AI WORK CONTEXT
+        </span>
 
-      <h2>
-        Ask about your work context
-      </h2>
+        <h2>
+          Ask about your work context
+        </h2>
 
-      <p>
-        Ask questions and get answers using
-        your connected graph context.
-      </p>
+        <p>
+          Ask questions and get answers using
+          your connected graph context.
+        </p>
+
+      </div>
 
     </div>
 
-  </div>
 
+    <!-- AI SEARCH -->
 
-  <!-- AI SEARCH -->
+    <div class="ai-search-box">
 
-  <div class="ai-search-box">
+      <input type="text" [(ngModel)]="aiQuestion" placeholder="What is Satyam working on?" (keyup.enter)="askAI()" />
 
-    <input
-      type="text"
-      [(ngModel)]="aiQuestion"
-      placeholder="What is Satyam working on?"
-      (keyup.enter)="askAI()"
-    />
+      <button class="ai-button" (click)="askAI()" [disabled]="aiLoading || !aiQuestion.trim()">
 
-    <button
-      class="ai-button"
-      (click)="askAI()"
-      [disabled]="aiLoading || !aiQuestion.trim()"
-    >
-
-      @if (aiLoading) {
+        @if (aiLoading) {
 
         <span>
           Thinking...
         </span>
 
-      } @else {
+        } @else {
 
         <span>
           Ask AI
         </span>
 
-      }
+        }
 
-    </button>
+      </button>
 
-  </div>
+    </div>
 
 
-  <!-- AI ERROR -->
+    <!-- AI ERROR -->
 
-  @if (aiError) {
+    @if (aiError) {
 
     <div class="ai-error">
       {{ aiError }}
     </div>
 
-  }
+    }
 
 
-  <!-- AI ANSWER -->
+    <!-- AI ANSWER -->
 
-  @if (aiAnswer) {
+    @if (aiAnswer) {
 
     <div class="ai-answer">
 
@@ -212,268 +203,59 @@
           AI
         </div>
 
-        <div class="ai-text">
-          {{ aiAnswer }}
-        </div>
+
 
       </div>
+     <div
+  class="ai-answer-content"
+  [innerHTML]="renderMarkdown(aiAnswer)">
+</div>
+
+@if (aiContext.length > 0) {
+
+  <div class="ai-evidence">
+
+    <div class="evidence-header">
+
+      <span class="evidence-label">
+        GRAPH EVIDENCE
+      </span>
+
+      <span class="evidence-count">
+        {{ aiContext.length }} connections
+      </span>
 
     </div>
 
-  }
+    <div class="evidence-list">
 
-</section>
-  <section class="context-search">
+      @for (
+        connection of aiContext;
+        track connection.relationship + connection.nodeId
+      ) {
 
-    <div class="search-header">
+        <div
+          class="evidence-card"
+          (click)="selectNode(connection.nodeId)"
+        >
 
-      <div>
-
-        <span class="search-label">
-          AI WORK CONTEXT
-        </span>
-
-        <h2>
-          Ask about your work context
-        </h2>
-
-        <p>
-          Search connected people, projects,
-          meetings, tasks and documents.
-        </p>
-
-      </div>
-
-    </div>
-
-
-    <div class="search-box">
-
-      <input type="text" [(ngModel)]="contextQuery" placeholder="What is Satyam working on?"
-        (keyup.enter)="askContext()" />
-
-      <button (click)="askContext()" [disabled]="contextLoading">
-
-        @if (contextLoading) {
-        @if (contextResult) {
-
-        <div class="context-result">
-
-          <!-- ================================= -->
-          <!-- RESULT HEADER -->
-          <!-- ================================= -->
-
-          <div class="result-header">
-
-            <div>
-
-              <span class="result-label">
-                CONTEXT RESULT
-              </span>
-
-              <h3>
-                {{ contextResult.query }}
-              </h3>
-
-            </div>
-
-
-            <div class="intent-badge">
-
-              Intent
-
-              <strong>
-                {{ contextResult.intent }}
-              </strong>
-
-            </div>
-
+          <div class="evidence-icon">
+            →
           </div>
 
+          <div class="evidence-content">
 
-          <!-- ================================= -->
-          <!-- PERSON -->
-          <!-- ================================= -->
-
-          @if (contextResult.person) {
-
-          <div class="result-person">
-
-            <div class="person-avatar">
-
-              {{ contextResult.person.name.charAt(0) }}
-
+            <div class="evidence-type">
+              {{ connection.nodeType }}
             </div>
-
-
-            <div>
-
-              <strong>
-                {{ contextResult.person.name }}
-              </strong>
-
-              <span>
-                {{ contextResult.person.id }}
-              </span>
-
-            </div>
-
-          </div>
-
-          }
-
-
-          <!-- ================================= -->
-          <!-- CONNECTIONS -->
-          <!-- ================================= -->
-
-          @if (
-          contextResult.connections.length > 0
-          ) {
-
-          <div class="result-connections">
-
-            @for (
-            connection
-            of contextResult.connections;
-
-            track
-            connection.relationship +
-            connection.nodeId
-            ) {
-
-            <div class="result-connection">
-
-              <span class="result-type">
-
-                {{ connection.nodeType }}
-
-              </span>
-
-
-              <div class="connection-info">
-
-                <strong>
-                  {{ connection.relationship }}
-                </strong>
-
-                <p>
-                  {{ connection.nodeName }}
-                </p>
-
-                <small>
-                  {{ connection.nodeId }}
-                </small>
-
-              </div>
-
-            </div>
-
-            }
-
-          </div>
-
-          }
-
-
-          <!-- ================================= -->
-          <!-- NO RESULT -->
-          <!-- ================================= -->
-
-          @if (
-          contextResult.connections.length === 0
-          ) {
-
-          <div class="no-context">
-
-            No relevant context was found
-            for this question.
-
-          </div>
-
-          }
-
-        </div>
-
-        }
-        } @else {
-        Ask Context
-        }
-
-      </button>
-
-    </div>
-
-
-    @if (contextError) {
-
-    <div class="error">
-      {{ contextError }}
-    </div>
-
-    }
-
-
-    @if (contextResult) {
-
-    <div class="context-result">
-
-      <div class="result-header">
-
-        <h3>
-          Context Result
-        </h3>
-
-        <span>
-          {{ contextResult.query }}
-        </span>
-
-      </div>
-
-
-      @if (contextResult.person) {
-
-      <div class="result-person">
-
-        <strong>
-          {{ contextResult.person.name }}
-        </strong>
-
-        <span>
-          {{ contextResult.person.id }}
-        </span>
-
-      </div>
-
-      }
-
-
-      <div class="result-connections">
-
-        @for (
-        connection
-        of contextResult.connections;
-
-        track
-        connection.relationship +
-        connection.nodeId
-        ) {
-
-        <div class="result-connection">
-
-          <span class="result-type">
-            {{ connection.nodeType }}
-          </span>
-
-          <div>
 
             <strong>
               {{ connection.relationship }}
             </strong>
 
-            <p>
+            <div class="evidence-name">
               {{ connection.nodeName }}
-            </p>
+            </div>
 
             <small>
               {{ connection.nodeId }}
@@ -483,15 +265,21 @@
 
         </div>
 
-        }
+      }
 
-      </div>
+    </div>
+
+  </div>
+
+}
+
 
     </div>
 
     }
 
   </section>
+
 
   <!-- ======================================= -->
   <!-- GRAPH + DETAILS -->

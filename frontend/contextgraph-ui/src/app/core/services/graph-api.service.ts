@@ -8,6 +8,21 @@ import { ContextQueryResponse } from '../../models/context-query.models';
 export interface AIContextResponse {
   question: string;
   answer: string;
+  context: {
+    person: {
+      id: string;
+      name: string;
+    } | null;
+
+    connections: AIContextConnection[];
+  };
+}
+
+export interface AIContextConnection {
+  relationship: string;
+  nodeId: string;
+  nodeName: string;
+  nodeType: string;
 }
 
 @Injectable({

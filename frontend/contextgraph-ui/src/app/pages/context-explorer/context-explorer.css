@@ -1567,3 +1567,154 @@
     white-space: normal;
   }
 }
+.ai-answer-content {
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+.ai-answer-content strong {
+  font-weight: 700;
+}
+
+.ai-answer-content ul {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.ai-answer-content li {
+  margin-bottom: 6px;
+}
+.ai-evidence {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.evidence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.evidence-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #7c3aed;
+}
+
+.evidence-count {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.evidence-list {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(220px, 1fr)
+  );
+
+  gap: 12px;
+}
+
+.evidence-card {
+  display: flex;
+  gap: 12px;
+
+  padding: 14px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.evidence-card:hover {
+  transform: translateY(-2px);
+
+  border-color: #8b5cf6;
+
+  box-shadow:
+    0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+.evidence-icon {
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #ede9fe;
+  color: #7c3aed;
+
+  font-weight: 700;
+}
+
+.evidence-content {
+  min-width: 0;
+}
+
+.evidence-type {
+  display: inline-block;
+
+  margin-bottom: 5px;
+
+  padding: 3px 7px;
+
+  border-radius: 5px;
+
+  background: #f1f5f9;
+
+  color: #64748b;
+
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.evidence-content strong {
+  display: block;
+
+  color: #7c3aed;
+
+  font-size: 14px;
+}
+
+.evidence-name {
+  margin-top: 4px;
+
+  color: #1e293b;
+
+  font-size: 14px;
+}
+
+.evidence-content small {
+  display: block;
+
+  margin-top: 4px;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+}
+:host ::ng-deep .selected-node {
+  border-width: 8px;
+  border-color: #111827;
+  background-color: #10b981;
+}
+.selected-node {
+  box-shadow: 0 0 0 6px rgba(124, 58, 237, 0.25);
+}

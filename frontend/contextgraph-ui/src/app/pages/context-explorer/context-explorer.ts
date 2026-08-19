@@ -8,9 +8,9 @@ import {
 
 import { FormsModule } from '@angular/forms';
 
-
+import { marked } from 'marked';
 import cytoscape from 'cytoscape';
-import { GraphApiService } from '../../core/services/graph-api.service';
+import { AIContextConnection, GraphApiService } from '../../core/services/graph-api.service';
 import { GraphExplorer } from '../../models/graph.models';
 import { ContextQueryResponse } from '../../models/context-query.models';
 
@@ -52,7 +52,7 @@ export class ContextExplorer
   contextError = '';
 
   contextResult: ContextQueryResponse | null = null;
-    // ==========================================
+  // ==========================================
   // AI Context
   // ==========================================
 
@@ -63,6 +63,7 @@ export class ContextExplorer
   aiError = '';
 
   aiAnswer = '';
+  aiContext: AIContextConnection[] = [];
   selectedNodeRelationships: {
     type: string;
     direction: string;
@@ -96,59 +97,61 @@ export class ContextExplorer
 
     }
   }
-
-askContext(): void {
-
-  if (!this.contextQuery.trim()) {
-    return;
+  renderMarkdown(text: string): string {
+    return marked.parse(text) as string;
   }
+  askContext(): void {
 
-  this.contextLoading = true;
+    if (!this.contextQuery.trim()) {
+      return;
+    }
 
-  this.contextError = '';
+    this.contextLoading = true;
 
-  this.contextResult = null;
+    this.contextError = '';
 
-  this.cdr.markForCheck();
+    this.contextResult = null;
+
+    this.cdr.markForCheck();
 
 
-  this.graphApi
-    .queryContext(this.contextQuery)
-    .subscribe({
+    this.graphApi
+      .queryContext(this.contextQuery)
+      .subscribe({
 
-      next: (result) => {
+        next: (result) => {
 
-        console.log(
-          'Context query result:',
-          result
-        );
+          console.log(
+            'Context query result:',
+            result
+          );
 
-        this.contextResult = result;
+          this.contextResult = result;
 
-        this.contextLoading = false;
+          this.contextLoading = false;
 
-        this.cdr.markForCheck();
+          this.cdr.markForCheck();
 
-      },
+        },
 
-      error: (error) => {
+        error: (error) => {
 
-        console.error(
-          'Context query error:',
-          error
-        );
+          console.error(
+            'Context query error:',
+            error
+          );
 
-        this.contextLoading = false;
+          this.contextLoading = false;
 
-        this.contextError =
-          'Unable to retrieve work context.';
+          this.contextError =
+            'Unable to retrieve work context.';
 
-        this.cdr.markForCheck();
+          this.cdr.markForCheck();
 
-      }
+        }
 
-    });
-}
+      });
+  }
   // ==========================================
   // Ask AI using Graph Context
   // ==========================================
@@ -160,10 +163,10 @@ askContext(): void {
     }
 
     this.aiLoading = true;
-
     this.aiError = '';
 
     this.aiAnswer = '';
+    this.aiContext = [];
 
     this.cdr.markForCheck();
 
@@ -180,6 +183,9 @@ askContext(): void {
 
           this.aiAnswer =
             result.answer;
+
+          this.aiContext =
+            result.context?.connections ?? [];
 
           this.aiLoading = false;
 
@@ -377,42 +383,46 @@ askContext(): void {
 
       style: [
 
-        // Default node
+        // ========================================
+        // Default Node
+        // ========================================
         {
           selector: 'node',
 
           style: {
-
-            'background-color': '#2563eb',
-
+            // Show node name
             'label': 'data(label)',
 
+            // Text
             'color': '#ffffff',
-
-            'text-valign': 'center',
-
-            'text-halign': 'center',
-
             'font-size': '12px',
-
             'font-weight': 600,
 
-            'width': '70px',
+            // Center text inside node
+            'text-valign': 'center',
+            'text-halign': 'center',
 
+            // Allow long names to wrap
+            'text-wrap': 'wrap',
+            'text-max-width': '80px',
+
+            // Node size
+            'width': '70px',
             'height': '70px',
 
-            'text-wrap': 'wrap',
-
-            'text-max-width': '65px',
-
+            // Border
             'border-width': 2,
+            'border-color': '#ffffff',
 
-            'border-color': '#ffffff'
+            // Make text readable
+            'text-outline-width': 0
           }
         },
 
 
-        // Default edge
+        // ========================================
+        // Default Edge
+        // ========================================
         {
           selector: 'edge',
 
@@ -428,6 +438,7 @@ askContext(): void {
 
             'curve-style': 'bezier',
 
+            // Relationship label
             'label': 'data(label)',
 
             'font-size': '9px',
@@ -436,6 +447,8 @@ askContext(): void {
 
             'color': '#334155',
 
+            // White background behind relationship
+            // labels
             'text-background-color': '#ffffff',
 
             'text-background-opacity': 1,
@@ -448,7 +461,6 @@ askContext(): void {
         // ========================================
         // Project
         // ========================================
-
         {
           selector: 'node[type="Project"]',
 
@@ -456,13 +468,25 @@ askContext(): void {
 
             'background-color': '#7c3aed',
 
+            'label': 'data(label)',
+
+            'color': '#ffffff',
+
             'width': '90px',
 
             'height': '90px',
 
             'font-size': '14px',
 
-            'font-weight': 'bold'
+            'font-weight': 'bold',
+
+            'text-valign': 'center',
+
+            'text-halign': 'center',
+
+            'text-wrap': 'wrap',
+
+            'text-max-width': '80px'
           }
         },
 
@@ -470,13 +494,32 @@ askContext(): void {
         // ========================================
         // Person
         // ========================================
-
         {
           selector: 'node[type="Person"]',
 
           style: {
 
-            'background-color': '#059669'
+            'background-color': '#059669',
+
+            'label': 'data(label)',
+
+            'color': '#ffffff',
+
+            'width': '70px',
+
+            'height': '70px',
+
+            'font-size': '13px',
+
+            'font-weight': 'bold',
+
+            'text-valign': 'center',
+
+            'text-halign': 'center',
+
+            'text-wrap': 'wrap',
+
+            'text-max-width': '65px'
           }
         },
 
@@ -484,13 +527,32 @@ askContext(): void {
         // ========================================
         // Meeting
         // ========================================
-
         {
           selector: 'node[type="Meeting"]',
 
           style: {
 
-            'background-color': '#ea580c'
+            'background-color': '#ea580c',
+
+            'label': 'data(label)',
+
+            'color': '#ffffff',
+
+            'width': '75px',
+
+            'height': '75px',
+
+            'font-size': '12px',
+
+            'font-weight': 'bold',
+
+            'text-valign': 'center',
+
+            'text-halign': 'center',
+
+            'text-wrap': 'wrap',
+
+            'text-max-width': '70px'
           }
         },
 
@@ -498,41 +560,95 @@ askContext(): void {
         // ========================================
         // Decision
         // ========================================
-
         {
           selector: 'node[type="Decision"]',
 
           style: {
 
-            'background-color': '#ca8a04'
+            'background-color': '#ca8a04',
+
+            'label': 'data(label)',
+
+            'color': '#ffffff',
+
+            // Bigger node for long decision names
+            'width': '105px',
+            'height': '105px',
+
+            'font-size': '12px',
+            'font-weight': 'bold',
+
+            'text-valign': 'center',
+            'text-halign': 'center',
+
+            'text-wrap': 'wrap',
+
+            'text-max-width': '95px',
+
+            'text-outline-width': 0
           }
         },
-
 
         // ========================================
         // Task
         // ========================================
-
         {
           selector: 'node[type="Task"]',
 
           style: {
 
-            'background-color': '#dc2626'
+            'background-color': '#dc2626',
+
+            'label': 'data(label)',
+
+            'color': '#ffffff',
+
+            'width': '90px',
+            'height': '90px',
+
+            'font-size': '12px',
+            'font-weight': 'bold',
+
+            'text-valign': 'center',
+            'text-halign': 'center',
+
+            'text-wrap': 'wrap',
+
+            'text-max-width': '80px',
+
+            'text-outline-width': 0
           }
         },
-
 
         // ========================================
         // Document
         // ========================================
-
         {
           selector: 'node[type="Document"]',
 
           style: {
 
-            'background-color': '#0891b2'
+            'background-color': '#0891b2',
+
+            'label': 'data(label)',
+
+            'color': '#ffffff',
+
+            'width': '75px',
+
+            'height': '75px',
+
+            'font-size': '12px',
+
+            'font-weight': 'bold',
+
+            'text-valign': 'center',
+
+            'text-halign': 'center',
+
+            'text-wrap': 'wrap',
+
+            'text-max-width': '70px'
           }
         },
 
@@ -540,13 +656,32 @@ askContext(): void {
         // ========================================
         // Email
         // ========================================
-
         {
           selector: 'node[type="Email"]',
 
           style: {
 
-            'background-color': '#db2777'
+            'background-color': '#db2777',
+
+            'label': 'data(label)',
+
+            'color': '#ffffff',
+
+            'width': '75px',
+
+            'height': '75px',
+
+            'font-size': '12px',
+
+            'font-weight': 'bold',
+
+            'text-valign': 'center',
+
+            'text-halign': 'center',
+
+            'text-wrap': 'wrap',
+
+            'text-max-width': '70px'
           }
         },
 
@@ -554,7 +689,6 @@ askContext(): void {
         // ========================================
         // Selected Node
         // ========================================
-
         {
           selector: 'node:selected',
 
@@ -566,7 +700,30 @@ askContext(): void {
 
             'overlay-opacity': 0.15,
 
-            'overlay-color': '#111827'
+            'overlay-color': '#111827',
+
+            'overlay-padding': 8
+          }
+        },
+
+
+        // ========================================
+        // AI Evidence Selected Node
+        // ========================================
+        {
+          selector: 'node.selected-node',
+
+          style: {
+
+            'border-width': 8,
+
+            'border-color': '#111827',
+
+            'overlay-color': '#7c3aed',
+
+            'overlay-opacity': 0.15,
+
+            'overlay-padding': 8
           }
         }
 
@@ -615,7 +772,6 @@ askContext(): void {
   // ==========================================
   // Select Node
   // ==========================================
-
   selectNode(nodeId: string): void {
 
     const nodeData =
@@ -623,12 +779,14 @@ askContext(): void {
         x => x.id === nodeId
       );
 
-
     if (!nodeData) {
-
+      console.warn(`Node '${nodeId}' not found.`);
       return;
     }
 
+    // ==========================================
+    // Update selected node information
+    // ==========================================
 
     this.selectedNodeId =
       nodeData.id;
@@ -638,7 +796,6 @@ askContext(): void {
 
     this.selectedNodeType =
       nodeData.label;
-
 
     this.selectedNodeRelationships = [];
 
@@ -652,7 +809,6 @@ askContext(): void {
       of this.graph.relationships
     ) {
 
-
       // Node is source
       if (
         relationship.source === nodeId
@@ -663,7 +819,6 @@ askContext(): void {
             x =>
               x.id === relationship.target
           );
-
 
         this.selectedNodeRelationships.push({
 
@@ -696,7 +851,6 @@ askContext(): void {
               x.id === relationship.source
           );
 
-
         this.selectedNodeRelationships.push({
 
           type:
@@ -719,6 +873,43 @@ askContext(): void {
     }
 
 
+    // ==========================================
+    // Cytoscape selection
+    // ==========================================
+
+    if (this.cy) {
+
+      // Clear previous Cytoscape selection
+      this.cy
+        .nodes()
+        .unselect();
+
+      const cyNode =
+        this.cy.getElementById(nodeId);
+
+      if (!cyNode.empty()) {
+
+        // Select node
+        cyNode.select();
+
+        // Focus graph on node
+        this.cy.animate({
+          center: {
+            eles: cyNode
+          },
+          zoom: 1.2,
+          duration: 500
+        });
+
+      }
+
+    }
+
+
+    // ==========================================
+    // Debug
+    // ==========================================
+
     console.log(
       'Selected node:',
       nodeData
@@ -730,9 +921,12 @@ askContext(): void {
     );
 
 
+    // ==========================================
+    // Update Angular UI
+    // ==========================================
+
     this.cdr.markForCheck();
   }
-
 
   // ==========================================
   // Clear Selection

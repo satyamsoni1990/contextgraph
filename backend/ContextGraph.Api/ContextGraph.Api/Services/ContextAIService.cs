@@ -17,19 +17,17 @@ public class ContextAIService
         _llmService = llmService;
     }
 
-    public async Task<string> AskWithContextAsync(
+    public async Task<AIContextResponse> AskWithContextAsync(
         string question,
         CancellationToken cancellationToken = default)
     {
-        // Step 1:
-        // Retrieve verified context from CognoDB
+        // 1. Get verified context from CognoDB
         var context =
             await _contextQueryService.QueryContextAsync(
                 question,
                 cancellationToken);
 
-        // Step 2:
-        // Convert graph context into JSON
+        // 2. Convert graph context to JSON
         var contextJson =
             JsonSerializer.Serialize(
                 context,
@@ -38,17 +36,24 @@ public class ContextAIService
                     WriteIndented = true
                 });
 
-        // Step 3:
-        // Build a grounded prompt
+        // 3. Build grounded prompt
         var prompt = BuildPrompt(
             question,
             contextJson);
 
-        // Step 4:
-        // Send graph context + question to LLM
-        return await _llmService.GenerateAnswerAsync(
-            prompt,
-            cancellationToken);
+        // 4. Ask LLM
+        var answer =
+            await _llmService.GenerateAnswerAsync(
+                prompt,
+                cancellationToken);
+
+        // 5. Return both answer and source context
+        return new AIContextResponse
+        {
+            Question = question,
+            Answer = answer,
+            Context = context
+        };
     }
 
     private static string BuildPrompt(
@@ -62,8 +67,7 @@ public class ContextAIService
 
         prompt.AppendLine();
 
-        prompt.AppendLine(
-            "IMPORTANT RULES:");
+        prompt.AppendLine("IMPORTANT RULES:");
 
         prompt.AppendLine(
             "1. Answer only using the supplied graph context.");
@@ -77,24 +81,24 @@ public class ContextAIService
         prompt.AppendLine(
             "4. Give a concise business-friendly answer.");
 
+        prompt.AppendLine(
+            "5. When useful, mention the relevant relationships from the graph.");
+
         prompt.AppendLine();
 
-        prompt.AppendLine(
-            "USER QUESTION:");
+        prompt.AppendLine("USER QUESTION:");
 
         prompt.AppendLine(question);
 
         prompt.AppendLine();
 
-        prompt.AppendLine(
-            "GRAPH CONTEXT:");
+        prompt.AppendLine("GRAPH CONTEXT:");
 
         prompt.AppendLine(contextJson);
 
         prompt.AppendLine();
 
-        prompt.AppendLine(
-            "ANSWER:");
+        prompt.AppendLine("ANSWER:");
 
         return prompt.ToString();
     }

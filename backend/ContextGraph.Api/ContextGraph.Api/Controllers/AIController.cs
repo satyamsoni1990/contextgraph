@@ -65,15 +65,12 @@ public class AIController : ControllerBase
             });
         }
 
-        var answer =
-            await _contextAIService.AskWithContextAsync(
-                request.Question,
-                cancellationToken);
+        var result =
+     await _contextAIService.AskWithContextAsync(
+         request.Question,
+         cancellationToken);
 
-        return Ok(new
-        {
-            question = request.Question,
-            answer
-        });
+        return Ok(result);
+
     }
 }
