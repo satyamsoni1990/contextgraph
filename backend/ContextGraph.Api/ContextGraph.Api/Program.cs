@@ -2,20 +2,35 @@ using ContextGraph.Api.Configuration;
 using ContextGraph.Api.Repositories;
 using ContextGraph.Api.Services;
 using Neo4j.Driver;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Render provides the PORT environment variable.
+// Locally, use 5122.
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5122";
 
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
+// Add services to the container.
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 builder.Services.AddSingleton<CognoDbService>();
 
+// --------------------------------------------------
+// CognoDB configuration
+// --------------------------------------------------
 
-var cognodbUri = Environment.GetEnvironmentVariable("COGNODB_URI");
-var cognodbUsername = Environment.GetEnvironmentVariable("COGNODB_USERNAME");
-var cognodbPassword = Environment.GetEnvironmentVariable("COGNODB_PASSWORD");
+var cognodbUri =
+    Environment.GetEnvironmentVariable("COGNODB_URI");
+
+var cognodbUsername =
+    Environment.GetEnvironmentVariable("COGNODB_USERNAME");
+
+var cognodbPassword =
+    Environment.GetEnvironmentVariable("COGNODB_PASSWORD");
 
 if (string.IsNullOrWhiteSpace(cognodbUri) ||
     string.IsNullOrWhiteSpace(cognodbUsername) ||
@@ -28,33 +43,47 @@ if (string.IsNullOrWhiteSpace(cognodbUri) ||
 builder.Services.AddSingleton<IDriver>(_ =>
     GraphDatabase.Driver(
         cognodbUri,
-        AuthTokens.Basic(cognodbUsername, cognodbPassword)));
+        AuthTokens.Basic(
+            cognodbUsername,
+            cognodbPassword)));
 
-builder.Services.AddScoped<IGraphRepository, GraphRepository>();
+builder.Services.AddScoped<
+    IGraphRepository,
+    GraphRepository>();
+
 builder.Services.AddScoped<
     IContextQueryService,
     ContextQueryService>();
+
 builder.Services.AddScoped<ContextAIService>();
+
+// --------------------------------------------------
+// CORS
+// --------------------------------------------------
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AngularClient", policy =>
     {
         policy
-            .WithOrigins("https://satyamsoni1990.github.io")
+            .WithOrigins(
+                "https://satyamsoni1990.github.io")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
 });
+
+// --------------------------------------------------
+// OpenRouter
+// --------------------------------------------------
+
 var openRouterOptions =
     builder.Configuration
         .GetSection("OpenRouter")
         .Get<OpenRouterOptions>()
     ?? new OpenRouterOptions();
 
-
-builder.Services.AddSingleton(
-    openRouterOptions);
-
+builder.Services.AddSingleton(openRouterOptions);
 
 builder.Services.AddHttpClient<
     ILLMService,
@@ -62,23 +91,35 @@ builder.Services.AddHttpClient<
     client =>
     {
         client.BaseAddress =
-            new Uri(
-                openRouterOptions.BaseUrl);
+            new Uri(openRouterOptions.BaseUrl);
 
         client.Timeout =
             TimeSpan.FromSeconds(60);
     });
+
 var app = builder.Build();
 
+// --------------------------------------------------
+// Swagger
+// --------------------------------------------------
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+// --------------------------------------------------
+// Health check
+// --------------------------------------------------
+
+app.MapGet("/health", () =>
+    Results.Ok(new
+    {
+        status = "healthy",
+        service = "ContextGraph.Api"
+    }));
+
+// --------------------------------------------------
+// HTTP pipeline
+// --------------------------------------------------
 
 app.UseCors("AngularClient");
 
